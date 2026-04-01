@@ -1,12 +1,12 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Sun, Map, MessageCircle, Users, Grid3X3 } from 'lucide-react'
+import { Sun, BookOpen, MessageCircle, Hexagon, Grid3X3 } from 'lucide-react'
 
 const tabs = [
   { label: 'اليوم', icon: Sun, path: '/' },
-  { label: 'رحلتي', icon: Map, path: '/journey' },
+  { label: 'الأركان', icon: Hexagon, path: '/pillars' },
   { label: 'اسأل', icon: MessageCircle, path: '/ask' },
-  { label: 'الرفقة', icon: Users, path: '/community' },
+  { label: 'تعلّم', icon: BookOpen, path: '/learn' },
   { label: 'أدوات', icon: Grid3X3, path: '/tools' },
 ]
 

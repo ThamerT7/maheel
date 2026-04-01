@@ -13,7 +13,7 @@ export const useProgressStore = create<ProgressStore>()(
   persist(
     (set, get) => ({
       completedModules: [],
-      currentModule: 's1-shahada',
+      currentModule: 'shahada-1',
       completeModule: (id) =>
         set((s) => ({
           completedModules: s.completedModules.includes(id)

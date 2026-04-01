@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ChevronLeft, Check, BookOpen, Lightbulb, Star, Dumbbell } from 'lucide-react'
 import { getModuleContent } from '../data/moduleContent'
-import { journeyStages } from '../data/journeyData'
+import { islamPillars, imanPillars } from '../data/pillarsData'
 import { useProgressStore } from '../store/progressStore'
 
 export function ModuleLesson() {
@@ -18,10 +18,10 @@ export function ModuleLesson() {
         <BookOpen className="w-12 h-12 text-text-light mb-4" />
         <p className="text-text-muted text-center">هذا الدرس قيد الإعداد وسيتوفر قريباً إن شاء الله</p>
         <button
-          onClick={() => nav('/journey')}
+          onClick={() => nav('/pillars')}
           className="mt-6 px-6 py-3 bg-primary text-white rounded-2xl font-medium"
         >
-          العودة للرحلة
+          العودة للأركان
         </button>
       </div>
     )
@@ -30,13 +30,13 @@ export function ModuleLesson() {
   const handleComplete = () => {
     if (!id) return
     completeModule(id)
-    // Find the next module
-    const allModules = journeyStages.flatMap((s) => s.modules)
-    const currentIdx = allModules.findIndex((m) => m.id === id)
-    if (currentIdx >= 0 && currentIdx < allModules.length - 1) {
-      setCurrentModule(allModules[currentIdx + 1].id)
+    // Find the next lesson in the same pillar
+    const allLessons = islamPillars.flatMap((p) => p.lessons)
+    const currentIdx = allLessons.findIndex((l) => l.id === id)
+    if (currentIdx >= 0 && currentIdx < allLessons.length - 1) {
+      setCurrentModule(allLessons[currentIdx + 1].id)
     }
-    nav('/journey')
+    nav('/pillars')
   }
 
   const sectionIcon = (type: string) => {
@@ -155,10 +155,10 @@ export function ModuleLesson() {
       {isCompleted && (
         <div className="px-5 mt-8">
           <button
-            onClick={() => nav('/journey')}
+            onClick={() => nav('/pillars')}
             className="w-full py-4 border-2 border-primary/20 text-primary rounded-2xl text-lg font-semibold hover:bg-primary/5 transition-colors active:scale-[0.98]"
           >
-            العودة لخريطة الرحلة
+            العودة للأركان
           </button>
         </div>
       )}
