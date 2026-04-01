@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import {
   Droplets, Compass, BookOpen, Navigation, Clock,
-  Play, CheckCircle2, Circle, Settings, Flame
+  Play, CheckCircle2, Settings, Flame, ChevronLeft, Bell
 } from 'lucide-react'
 import { useGreeting, useHijriDate, useDaysSinceSahada } from '../hooks/useGreeting'
 import { useUserStore } from '../store/userStore'
@@ -16,15 +16,17 @@ import { useNavigate } from 'react-router-dom'
 
 const today = new Date().toISOString().split('T')[0]
 
-const quickLinks = [
-  { label: 'الوضوء', icon: Droplets, path: '/guides/wudu' },
-  { label: 'الصلاة', icon: Compass, path: '/guides/prayer' },
-  { label: 'الأذكار', icon: BookOpen, path: '/guides' },
-  { label: 'القبلة', icon: Navigation, path: '/tools' },
-  { label: 'أوقات الصلاة', icon: Clock, path: '/prayer-times' },
-]
-
 const prayerNames: PrayerName[] = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']
+const dayLabels = ['أحد', 'إثن', 'ثلا', 'أرب', 'خمي', 'جمع', 'سبت']
+
+const stageEmojis: Record<string, string> = { s1: '🕌', s2: '📿', s3: '📖', s4: '🌟' }
+const quickLinks = [
+  { label: 'الوضوء', icon: Droplets, path: '/guides/wudu', bg: '#DBEAFE' },
+  { label: 'الصلاة', icon: Compass, path: '/guides/prayer', bg: '#D1FAE5' },
+  { label: 'الأذكار', icon: BookOpen, path: '/guides', bg: '#FEF3C7' },
+  { label: 'القبلة', icon: Navigation, path: '/tools', bg: '#F3E8FF' },
+  { label: 'الأوقات', icon: Clock, path: '/prayer-times', bg: '#FFE4E6' },
+]
 
 function usePrayerStreak() {
   const days = usePrayerStore((s) => s.days)
@@ -33,15 +35,12 @@ function usePrayerStreak() {
     const d = new Date()
     const todayStr = d.toISOString().split('T')[0]
     const todayDay = days[todayStr]
-    if (todayDay && prayerNames.every((p) => todayDay.prayers[p] === 'done')) {
-      streak++
-    }
+    if (todayDay && prayerNames.every((p) => todayDay.prayers[p] === 'done')) streak++
     d.setDate(d.getDate() - 1)
     for (let i = 0; i < 365; i++) {
       const dateStr = d.toISOString().split('T')[0]
       const day = days[dateStr]
-      if (!day) break
-      if (!prayerNames.every((p) => day.prayers[p] === 'done')) break
+      if (!day || !prayerNames.every((p) => day.prayers[p] === 'done')) break
       streak++
       d.setDate(d.getDate() - 1)
     }
@@ -57,11 +56,27 @@ function useDailyTask() {
   }, [currentModule])
 }
 
+function useWeekPrayers() {
+  const days = usePrayerStore((s) => s.days)
+  return useMemo(() => {
+    const now = new Date()
+    const todayIdx = now.getDay()
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(now)
+      d.setDate(d.getDate() - todayIdx + i)
+      const dateStr = d.toISOString().split('T')[0]
+      const dayData = days[dateStr]
+      const done = dayData ? prayerNames.filter((p) => dayData.prayers[p] === 'done').length : 0
+      return { day: dayLabels[i], done, isToday: i === todayIdx }
+    })
+  }, [days])
+}
+
 export function Home() {
   const greeting = useGreeting()
   const hijri = useHijriDate()
   const shahadaDate = useUserStore((s) => s.shahadaDate)
-  const days = useDaysSinceSahada(shahadaDate)
+  const daysCount = useDaysSinceSahada(shahadaDate)
   const prayerDays = usePrayerStore((s) => s.days)
   const togglePrayer = usePrayerStore((s) => s.togglePrayer)
   const prayerDay = prayerDays[today] ?? { date: today, prayers: { fajr: 'pending' as const, dhuhr: 'pending' as const, asr: 'pending' as const, maghrib: 'pending' as const, isha: 'pending' as const } }
@@ -72,98 +87,141 @@ export function Home() {
   const { times: prayerTimes } = usePrayerTimes()
   const nextPrayer = useMemo(() => prayerTimes ? getNextPrayer(prayerTimes) : null, [prayerTimes])
   const todayDone = prayerNames.filter((p) => prayerDay.prayers[p] === 'done').length
+  const weekPrayers = useWeekPrayers()
+  const completedModules = useProgressStore((s) => s.completedModules)
+  const totalModules = useMemo(() => journeyStages.flatMap((s) => s.modules).length, [])
+  const progressPct = totalModules > 0 ? Math.round((completedModules.length / totalModules) * 100) : 0
 
   return (
-    <div className="pb-4">
-      {/* ── Greeting Header ── */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="px-5 pt-8 pb-2 flex items-start justify-between gap-3"
-      >
-        <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold text-primary dark:text-primary-lightest">{greeting}</h1>
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
-            {hijri && <span className="text-sm text-text-muted">{hijri}</span>}
-            {days != null && (
-              <>
-                <span className="w-1 h-1 rounded-full bg-accent inline-block" />
-                <span className="text-sm text-accent font-medium">اليوم {days} في رحلتك</span>
-              </>
-            )}
+    <div className="pb-6">
+      {/* ── Header ── */}
+      <div className="px-5 pt-8 pb-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+              <span className="text-xl">🌙</span>
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-text dark:text-white">{greeting}</h1>
+              <p className="text-xs text-text-muted mt-0.5">
+                {hijri}{daysCount != null ? ` · يوم ${daysCount}` : ''}
+              </p>
+            </div>
           </div>
-          {nextPrayer && (
-            <p className="text-sm text-text-muted mt-1">
-              الصلاة القادمة: <span className="font-semibold text-primary dark:text-primary-lightest">{nextPrayer.nameAr}</span> — {nextPrayer.time}
-            </p>
-          )}
+          <div className="flex items-center gap-2">
+            <button className="w-10 h-10 rounded-2xl bg-white dark:bg-white/10 shadow-xs flex items-center justify-center relative">
+              <Bell className="w-[18px] h-[18px] text-text-muted" />
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-accent" />
+            </button>
+            <button
+              onClick={() => nav('/settings')}
+              className="w-10 h-10 rounded-2xl bg-white dark:bg-white/10 shadow-xs flex items-center justify-center"
+              aria-label="الإعدادات"
+            >
+              <Settings className="w-[18px] h-[18px] text-text-muted" />
+            </button>
+          </div>
         </div>
-        <button
-          onClick={() => nav('/settings')}
-          className="shrink-0 w-11 h-11 rounded-xl hover:bg-surface-warm dark:hover:bg-white/10 flex items-center justify-center"
-          aria-label="الإعدادات"
-        >
-          <Settings className="w-5 h-5 text-text-muted" />
-        </button>
-      </motion.div>
+      </div>
 
-      {/* ── Daily Task Card ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="px-5 mt-4"
-      >
-        <div className="bg-primary rounded-3xl p-5 text-white relative overflow-hidden">
-          <svg className="absolute inset-0 w-full h-full opacity-[0.10]" viewBox="0 0 300 200" aria-hidden="true">
-            <circle cx="240" cy="30" r="80" fill="none" stroke="#D4A853" strokeWidth="0.8" />
-            <circle cx="240" cy="30" r="50" fill="none" stroke="#D4A853" strokeWidth="0.5" />
-            <circle cx="40" cy="170" r="40" fill="none" stroke="#fff" strokeWidth="0.4" />
-          </svg>
+      {/* ── Hero Daily Task ── */}
+      <div className="px-5 mb-5">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="rounded-3xl p-5 pb-4 relative overflow-hidden"
+          style={{ background: 'linear-gradient(145deg, #D1FAE5 0%, #A7F3D0 40%, #6EE7B7 100%)' }}
+        >
+          {/* Decorative circles */}
+          <div className="absolute -top-6 -left-6 w-24 h-24 rounded-full bg-white/25" />
+          <div className="absolute -bottom-8 -right-4 w-28 h-28 rounded-full bg-primary/8" />
+
           <div className="relative z-10">
-            <span className="inline-block px-3 py-1 bg-white/15 rounded-full text-xs font-medium mb-3">
-              مهمة اليوم
-            </span>
-            <h2 className="text-lg font-bold mb-1">{dailyTask.title}</h2>
-            <p className="text-white/60 text-sm mb-4">{dailyTask.duration} · أساسي</p>
+            <div className="flex items-start justify-between mb-3">
+              <span className="px-3 py-1.5 bg-white/70 backdrop-blur-sm rounded-xl text-[11px] font-bold text-primary">
+                مهمة اليوم ✨
+              </span>
+              {nextPrayer && (
+                <span className="px-2.5 py-1 bg-white/50 rounded-lg text-[10px] font-semibold text-primary/70">
+                  {nextPrayer.nameAr} {nextPrayer.time}
+                </span>
+              )}
+            </div>
+
+            <h2 className="text-[17px] font-bold text-primary leading-relaxed mb-1">{dailyTask.title}</h2>
+            <p className="text-xs text-primary/50 mb-4">{dailyTask.duration}</p>
+
             <button
               onClick={() => nav(`/lesson/${dailyTask.id}`)}
-              className="inline-flex items-center gap-2 bg-accent text-white px-5 py-2.5 rounded-2xl font-semibold text-sm hover:bg-accent-light active:scale-[0.97]"
+              className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm active:scale-[0.97] transition-transform"
+              style={{ boxShadow: '0 4px 16px rgba(27, 67, 50, 0.3)' }}
             >
               <Play className="w-4 h-4" />
               ابدأ الآن
             </button>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
 
       {/* ── Prayer Tracker ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="px-5 mt-5"
-      >
-        <div className="card-elevated p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-bold text-primary dark:text-primary-lightest">صلواتك اليوم</h2>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-text-muted">{todayDone}/٥</span>
-              {streak > 0 && (
-                <div className="flex items-center gap-1 px-2 py-0.5 bg-accent/10 rounded-full">
-                  <Flame className="w-3.5 h-3.5 text-accent" />
-                  <span className="text-xs font-bold text-accent">{streak}</span>
-                </div>
-              )}
-            </div>
+      <div className="px-5 mb-5">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white dark:bg-white/5 rounded-3xl p-5 shadow-sm"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-[13px] font-bold text-text dark:text-white">صلوات الأسبوع</h2>
+            {streak > 0 && (
+              <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg" style={{ background: 'rgba(212, 168, 83, 0.12)' }}>
+                <Flame className="w-3.5 h-3.5 text-accent" />
+                <span className="text-xs font-bold text-accent">{streak}</span>
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-5 gap-1.5">
+          {/* Week emoji row */}
+          <div className="grid grid-cols-7 gap-1 mb-5">
+            {weekPrayers.map((w) => {
+              const bg = w.done === 5
+                ? 'bg-prayer-done'
+                : w.done > 0
+                ? 'bg-[#FEF3C7]'
+                : w.isToday
+                ? 'bg-primary/8'
+                : 'bg-[#F5F3EF] dark:bg-white/5'
+              const text = w.done === 5
+                ? 'text-white'
+                : w.done > 0
+                ? 'text-amber-700'
+                : w.isToday
+                ? 'text-primary font-bold'
+                : 'text-text-light'
+              return (
+                <div key={w.day} className="flex flex-col items-center gap-1">
+                  <span className={`text-[10px] ${w.isToday ? 'text-primary font-bold' : 'text-text-light'}`}>{w.day}</span>
+                  <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center`}>
+                    <span className={`text-[11px] font-semibold ${text}`}>
+                      {w.done === 5 ? '✓' : w.done > 0 ? w.done : '–'}
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Today row */}
+          <div className="flex items-center justify-between mb-2.5">
+            <span className="text-xs font-semibold text-text dark:text-white">اليوم</span>
+            <span className="text-[11px] text-text-light font-medium">{todayDone} من ٥</span>
+          </div>
+          <div className="grid grid-cols-5 gap-2">
             {prayerNames.map((p) => {
               const status = prayerDay.prayers[p]
               const pKey = (p.charAt(0).toUpperCase() + p.slice(1)) as keyof NonNullable<typeof prayerTimes>
               return (
-                <PrayerPill
+                <PrayerChip
                   key={p}
                   label={PRAYER_LABELS[p]}
                   status={status}
@@ -173,95 +231,132 @@ export function Home() {
               )
             })}
           </div>
+        </motion.div>
+      </div>
 
-          {streak > 0 && (
-            <p className="text-xs text-accent text-center mt-3 font-medium">
-              ماشاء الله — {streak} {streak === 1 ? 'يوم' : streak <= 10 ? 'أيام' : 'يوماً'} متواصلة
-            </p>
-          )}
-        </div>
-      </motion.div>
+      {/* ── Progress + Streak row ── */}
+      <div className="px-5 mb-5">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="grid grid-cols-2 gap-3"
+        >
+          {/* Progress card */}
+          <div className="rounded-3xl p-4 flex flex-col items-center justify-center" style={{ background: '#D1FAE5' }}>
+            <div className="relative w-16 h-16 mb-2">
+              <svg className="w-16 h-16 -rotate-90" viewBox="0 0 48 48">
+                <circle cx="24" cy="24" r="20" fill="none" stroke="#1B433220" strokeWidth="3.5" />
+                <circle cx="24" cy="24" r="20" fill="none" stroke="#1B4332" strokeWidth="3.5"
+                  strokeDasharray={`${2 * Math.PI * 20}`}
+                  strokeDashoffset={`${2 * Math.PI * 20 * (1 - progressPct / 100)}`}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-primary">{progressPct}%</span>
+            </div>
+            <p className="text-xs font-bold text-primary">التقدم</p>
+            <p className="text-[10px] text-primary/50">{completedModules.length} من {totalModules}</p>
+          </div>
 
-      {/* ── Quick Reference ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="mt-5"
-      >
-        <h2 className="text-sm font-bold text-primary dark:text-primary-lightest mb-3 px-5">مرجع سريع</h2>
+          {/* Streak card */}
+          <div className="rounded-3xl p-4 flex flex-col items-center justify-center" style={{ background: '#FEF3C7' }}>
+            <div className="w-16 h-16 rounded-2xl bg-white/50 flex items-center justify-center mb-2">
+              <Flame className="w-8 h-8 text-accent" />
+            </div>
+            <p className="text-xl font-bold text-amber-800">{streak}</p>
+            <p className="text-[10px] text-amber-700/60">{streak === 1 ? 'يوم' : streak <= 10 ? 'أيام' : 'يوماً'} متواصلة</p>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* ── Quick Links ── */}
+      <div className="mb-5">
+        <h3 className="text-[13px] font-bold text-text dark:text-white px-5 mb-3">مرجع سريع</h3>
         <div className="px-5 overflow-x-auto hide-scrollbar">
-          <div className="flex gap-2.5 w-max">
+          <div className="flex gap-2.5" style={{ width: 'max-content' }}>
             {quickLinks.map((q) => (
               <button
                 key={q.label}
                 onClick={() => nav(q.path)}
-                className="w-[72px] flex flex-col items-center gap-2 py-3 px-2 card dark:bg-white/5 hover:shadow-md active:scale-[0.96]"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl active:scale-[0.96] transition-transform shadow-xs"
+                style={{ background: q.bg }}
               >
-                <div className="w-9 h-9 rounded-lg bg-primary/8 dark:bg-primary/20 flex items-center justify-center">
-                  <q.icon className="w-[18px] h-[18px] text-primary dark:text-primary-lightest" />
-                </div>
-                <span className="text-[11px] font-semibold text-text dark:text-white/80 leading-tight text-center">{q.label}</span>
+                <q.icon className="w-4 h-4 text-primary" />
+                <span className="text-xs font-semibold text-text whitespace-nowrap">{q.label}</span>
               </button>
             ))}
           </div>
         </div>
-      </motion.div>
+      </div>
 
-      {/* ── Ayah of the Day ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="px-5 mt-5"
-      >
-        <div
-          className="relative rounded-2xl p-5 overflow-hidden"
-          style={{
-            background: 'linear-gradient(135deg, var(--color-surface-card) 0%, var(--color-surface-warm) 100%)',
-            border: '1px solid rgba(212,168,83,0.15)',
-          }}
+      {/* ── My Courses ── */}
+      <div className="px-5 mb-5">
+        <h3 className="text-[13px] font-bold text-text dark:text-white mb-3">دروسي</h3>
+        <div className="space-y-2.5">
+          {journeyStages.slice(0, 2).map((stage) => (
+            <button
+              key={stage.id}
+              onClick={() => nav('/journey')}
+              className="w-full flex items-center gap-3 bg-[#1C1917] rounded-2xl p-3.5 active:scale-[0.98] transition-transform"
+            >
+              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+                <span className="text-base">{stageEmojis[stage.id] ?? '📚'}</span>
+              </div>
+              <div className="flex-1 min-w-0 text-right">
+                <p className="text-sm font-bold text-white">{stage.name}</p>
+                <p className="text-[11px] text-white/40">{stage.modules.length} دروس · {stage.period}</p>
+              </div>
+              <ChevronLeft className="w-4 h-4 text-white/30 shrink-0" />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Ayah ── */}
+      <div className="px-5">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="rounded-3xl p-5 relative overflow-hidden"
+          style={{ background: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)' }}
         >
-          <svg className="absolute top-2 right-2 w-7 h-7 text-accent/20" viewBox="0 0 32 32" aria-hidden="true">
-            <path d="M0 16L16 0L32 16L16 32Z" fill="none" stroke="currentColor" strokeWidth="1" />
-            <path d="M8 16L16 8L24 16L16 24Z" fill="none" stroke="currentColor" strokeWidth="0.5" />
-          </svg>
-
-          <h2 className="text-xs font-bold text-accent mb-4">آية اليوم</h2>
-          <p className="font-quran text-[1.4rem] leading-[2] text-primary dark:text-primary-lightest text-center mb-3">
+          <span className="text-[11px] font-bold text-accent mb-3 block">آية اليوم</span>
+          <p className="font-quran text-xl leading-[2.2] text-primary dark:text-primary text-center mb-2">
             {ayah.arabic}
           </p>
-          <p className="text-sm text-text-muted text-center mb-3 leading-relaxed">{ayah.translation}</p>
-          <div className="flex justify-center">
-            <span className="text-[11px] text-text-light bg-surface dark:bg-white/5 px-3 py-1 rounded-full font-medium">
-              سورة {ayah.surah} — الآية {ayah.ayahNumber}
+          <p className="text-xs text-text-muted text-center leading-relaxed mb-3">{ayah.translation}</p>
+          <p className="text-center">
+            <span className="text-[10px] text-amber-700/50 bg-white/40 px-2.5 py-1 rounded-lg">
+              سورة {ayah.surah} · آية {ayah.ayahNumber}
             </span>
-          </div>
-        </div>
-      </motion.div>
+          </p>
+        </motion.div>
+      </div>
     </div>
   )
 }
 
-/* ── Prayer Pill ── */
-function PrayerPill({ label, status, onTap, time }: { label: string; status: PrayerStatus; onTap: () => void; time?: string }) {
-  const bg: Record<PrayerStatus, string> = {
-    done: 'bg-prayer-done text-white',
-    pending: 'bg-surface-warm dark:bg-white/10 text-text-muted dark:text-white/60',
-    missed: 'bg-prayer-missed/10 text-prayer-missed',
+/* ── Prayer Chip ── */
+function PrayerChip({ label, status, onTap, time }: { label: string; status: PrayerStatus; onTap: () => void; time?: string }) {
+  const config: Record<PrayerStatus, { bg: string; text: string }> = {
+    done: { bg: 'bg-prayer-done', text: 'text-white' },
+    pending: { bg: 'bg-[#F5F3EF] dark:bg-white/8', text: 'text-text-muted' },
+    missed: { bg: 'bg-red-50', text: 'text-prayer-missed' },
   }
+  const { bg, text } = config[status]
 
   return (
     <button
       onClick={onTap}
       aria-label={`${label} — ${status === 'done' ? 'تم' : status === 'missed' ? 'فائتة' : 'لم تصلّ'}`}
-      className={`rounded-xl py-2 flex flex-col items-center gap-0.5 active:scale-[0.93] transition-transform ${bg[status]}`}
+      className={`${bg} rounded-xl py-2.5 flex flex-col items-center gap-0.5 active:scale-[0.93] transition-transform`}
     >
-      {status === 'done' && <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2.5} />}
-      {status === 'missed' && <Circle className="w-3.5 h-3.5" />}
-      <span className="text-[11px] font-semibold leading-none">{label}</span>
+      {status === 'done' && <CheckCircle2 className={`w-3.5 h-3.5 ${text}`} strokeWidth={2.5} />}
+      <span className={`text-[11px] font-semibold ${text}`}>{label}</span>
       {time && status === 'pending' && (
-        <span className="text-[9px] opacity-50 leading-none" dir="ltr">{time.slice(0, 5)}</span>
+        <span className="text-[9px] text-text-light" dir="ltr">{time.slice(0, 5)}</span>
       )}
     </button>
   )

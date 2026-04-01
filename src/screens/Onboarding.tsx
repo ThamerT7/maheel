@@ -36,7 +36,7 @@ export function Onboarding() {
       <div className="relative z-10 px-8 pt-10 pb-4">
         <div className="flex gap-2">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex-1 h-1 rounded-full overflow-hidden bg-primary/10">
+            <div key={i} className="flex-1 h-1.5 rounded-full overflow-hidden bg-primary/10">
               <motion.div
                 className="h-full bg-primary rounded-full"
                 initial={false}
@@ -82,41 +82,52 @@ export function Onboarding() {
 
 function Step1({ onNext }: { onNext: () => void }) {
   return (
-    <div className="text-center space-y-10">
-      {/* Decorative Islamic star with rotation */}
-      <motion.div
-        className="mx-auto w-32 h-32 flex items-center justify-center"
-        animate={{ rotate: 360 }}
-        transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
+    <div className="text-center space-y-8">
+      {/* Hero block with gradient */}
+      <div
+        className="relative mx-auto w-full rounded-[var(--radius-2xl)] overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 50%, #6EE7B7 100%)',
+          padding: '3rem 1.5rem',
+        }}
       >
-        <svg viewBox="0 0 100 100" className="w-full h-full">
-          <polygon
-            points="50,5 61,35 95,35 68,57 79,90 50,70 21,90 32,57 5,35 39,35"
-            fill="none"
-            stroke="#1B4332"
-            strokeWidth="1"
-            opacity="0.7"
-          />
-          <polygon
-            points="50,15 58,37 82,37 63,52 71,77 50,63 29,77 37,52 18,37 42,37"
-            fill="none"
-            stroke="#D4A853"
-            strokeWidth="0.8"
-            opacity="0.5"
-          />
-          <circle cx="50" cy="50" r="12" fill="none" stroke="#1B4332" strokeWidth="0.6" opacity="0.4" />
-          <circle cx="50" cy="50" r="4" fill="#D4A853" opacity="0.3" />
-        </svg>
-      </motion.div>
+        {/* Floating decorative circles */}
+        <motion.div
+          className="absolute top-4 left-6 w-12 h-12 rounded-full bg-white/20"
+          animate={{ y: [0, -8, 0] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="absolute bottom-6 right-8 w-8 h-8 rounded-full bg-white/25"
+          animate={{ y: [0, 6, 0] }}
+          transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
+        />
+        <motion.div
+          className="absolute top-10 right-4 w-5 h-5 rounded-full bg-primary/10"
+          animate={{ y: [0, -5, 0] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+        />
+        {/* Moon emoji */}
+        <motion.div
+          className="text-6xl mb-2"
+          animate={{ rotate: [0, 5, -5, 0] }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          🌙
+        </motion.div>
+      </div>
+
       <div>
-        <h1 className="text-3xl font-bold text-primary mb-3 leading-tight">مرحباً بك في رحلتك</h1>
+        <h1 className="text-4xl font-bold text-primary mb-3 leading-tight">مرحباً بك في رحلتك</h1>
         <p className="text-text-muted text-base leading-relaxed">
           هذا التطبيق رُفِق لك — لا ليحكم عليك
         </p>
       </div>
+
       <button
         onClick={onNext}
-        className="w-full py-4 bg-primary text-white rounded-2xl text-lg font-bold btn-primary-glow hover:bg-primary-light transition-all active:scale-[0.98]"
+        className="w-full py-4 bg-primary text-white rounded-[var(--radius-xl)] text-lg font-bold btn-primary-glow hover:bg-primary-light transition-all active:scale-[0.98]"
+        style={{ boxShadow: 'var(--shadow-primary)' }}
       >
         ابدأ رحلتك
       </button>
@@ -148,13 +159,21 @@ function Step2({ onNext }: { onNext: () => void }) {
               key={opt.value}
               onClick={() => setShahadaStage(opt.value)}
               whileTap={{ scale: 0.98 }}
-              className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all ${
+              className={`w-full flex items-center gap-4 p-5 rounded-[var(--radius-xl)] border-2 transition-all relative overflow-hidden ${
                 selected
-                  ? 'border-primary bg-primary/5 shadow-sm'
+                  ? 'border-primary/20 bg-primary/5 shadow-sm'
                   : 'border-transparent bg-white text-text hover:border-text-light/20 shadow-xs'
               }`}
-              style={selected ? { boxShadow: '0 0 0 1px rgba(27,67,50,0.1), var(--shadow-sm)' } : {}}
             >
+              {/* Green left accent bar (appears on right in RTL) */}
+              {selected && (
+                <motion.div
+                  initial={{ scaleY: 0 }}
+                  animate={{ scaleY: 1 }}
+                  className="absolute top-0 right-0 w-1 h-full bg-primary rounded-full"
+                  style={{ originY: 0.5 }}
+                />
+              )}
               <span className={`transition-colors ${selected ? 'text-accent' : 'text-text-light'}`}>
                 {opt.icon}
               </span>
@@ -163,9 +182,9 @@ function Step2({ onNext }: { onNext: () => void }) {
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="w-6 h-6 rounded-full bg-primary flex items-center justify-center"
+                  className="w-7 h-7 rounded-full bg-primary flex items-center justify-center"
                 >
-                  <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                  <Check className="w-4 h-4 text-white" strokeWidth={3} />
                 </motion.div>
               )}
             </motion.button>
@@ -175,7 +194,7 @@ function Step2({ onNext }: { onNext: () => void }) {
       <button
         onClick={onNext}
         disabled={!shahadaStage}
-        className="w-full py-4 bg-primary text-white rounded-2xl text-lg font-bold disabled:opacity-30 disabled:cursor-not-allowed btn-primary-glow hover:bg-primary-light transition-all active:scale-[0.98]"
+        className="w-full py-4 bg-primary text-white rounded-[var(--radius-xl)] text-lg font-bold disabled:opacity-30 disabled:cursor-not-allowed btn-primary-glow hover:bg-primary-light transition-all active:scale-[0.98]"
       >
         التالي
       </button>
@@ -205,13 +224,13 @@ function Step3({ onNext }: { onNext: () => void }) {
             <motion.button
               key={c}
               onClick={() => toggle(c)}
-              whileTap={{ scale: 0.95 }}
-              animate={selected ? { scale: [1, 1.05, 1] } : {}}
-              transition={{ duration: 0.2 }}
-              className={`px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+              whileTap={{ scale: 0.92 }}
+              animate={selected ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+              transition={{ duration: 0.25, type: 'spring', stiffness: 400, damping: 15 }}
+              className={`px-5 py-3 rounded-[var(--radius-xl)] text-sm font-medium transition-all ${
                 selected
-                  ? 'bg-primary text-white shadow-sm'
-                  : 'bg-white text-text-muted shadow-xs hover:shadow-sm'
+                  ? 'card-block-green text-primary shadow-sm border border-primary/15'
+                  : 'bg-white text-text-muted shadow-xs hover:shadow-sm border border-transparent'
               }`}
             >
               {c}
@@ -222,7 +241,7 @@ function Step3({ onNext }: { onNext: () => void }) {
       <button
         onClick={onNext}
         disabled={concerns.length === 0}
-        className="w-full py-4 bg-primary text-white rounded-2xl text-lg font-bold disabled:opacity-30 disabled:cursor-not-allowed btn-primary-glow hover:bg-primary-light transition-all active:scale-[0.98]"
+        className="w-full py-4 bg-primary text-white rounded-[var(--radius-xl)] text-lg font-bold disabled:opacity-30 disabled:cursor-not-allowed btn-primary-glow hover:bg-primary-light transition-all active:scale-[0.98]"
       >
         التالي
       </button>
@@ -248,21 +267,30 @@ function Step4({ onNext }: { onNext: () => void }) {
               key={l.code}
               onClick={() => setLanguage(l.code)}
               whileTap={{ scale: 0.98 }}
-              className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all ${
+              className={`w-full flex items-center gap-4 p-5 rounded-[var(--radius-xl)] border-2 transition-all relative overflow-hidden ${
                 selected
-                  ? 'border-primary bg-primary/5 shadow-sm'
+                  ? 'border-primary/20 bg-primary/5 shadow-sm'
                   : 'border-transparent bg-white hover:border-text-light/20 shadow-xs'
               }`}
             >
+              {/* Green accent bar */}
+              {selected && (
+                <motion.div
+                  initial={{ scaleY: 0 }}
+                  animate={{ scaleY: 1 }}
+                  className="absolute top-0 right-0 w-1 h-full bg-primary rounded-full"
+                  style={{ originY: 0.5 }}
+                />
+              )}
               <span className="text-2xl">{l.flag}</span>
               <span className="font-medium flex-1 text-right">{l.label}</span>
               {selected && (
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="w-6 h-6 rounded-full bg-primary flex items-center justify-center"
+                  className="w-7 h-7 rounded-full bg-primary flex items-center justify-center"
                 >
-                  <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                  <Check className="w-4 h-4 text-white" strokeWidth={3} />
                 </motion.div>
               )}
             </motion.button>
@@ -271,7 +299,7 @@ function Step4({ onNext }: { onNext: () => void }) {
       </div>
       <button
         onClick={onNext}
-        className="w-full py-4 bg-primary text-white rounded-2xl text-lg font-bold btn-primary-glow hover:bg-primary-light transition-all active:scale-[0.98]"
+        className="w-full py-4 bg-primary text-white rounded-[var(--radius-xl)] text-lg font-bold btn-primary-glow hover:bg-primary-light transition-all active:scale-[0.98]"
       >
         التالي
       </button>
@@ -299,12 +327,14 @@ function Step5({ onFinish }: { onFinish: () => void }) {
               key={m}
               onClick={() => setDailyMinutes(m)}
               whileTap={{ scale: 0.95 }}
-              animate={selected ? { y: -4 } : { y: 0 }}
-              className={`w-[72px] h-[72px] rounded-2xl flex flex-col items-center justify-center transition-all ${
+              animate={selected ? { y: -6 } : { y: 0 }}
+              transition={{ type: 'spring', stiffness: 350, damping: 20 }}
+              className={`w-[76px] h-[76px] rounded-[var(--radius-xl)] flex flex-col items-center justify-center transition-all ${
                 selected
-                  ? 'bg-primary text-white shadow-lg'
+                  ? 'card-block-gold text-primary font-bold'
                   : 'bg-white text-text-muted shadow-xs hover:shadow-sm'
               }`}
+              style={selected ? { boxShadow: '0 8px 24px rgba(212, 168, 83, 0.35)' } : {}}
             >
               <span className="text-xl font-bold">{minuteLabels[m]}</span>
               <span className="text-[10px] opacity-70">دقيقة</span>
@@ -314,7 +344,7 @@ function Step5({ onFinish }: { onFinish: () => void }) {
       </div>
       <button
         onClick={onFinish}
-        className="w-full py-4 bg-accent text-white rounded-2xl text-lg font-bold btn-accent-glow hover:bg-accent-light transition-all active:scale-[0.98]"
+        className="w-full py-4 bg-accent text-white rounded-[var(--radius-xl)] text-lg font-bold btn-accent-glow hover:bg-accent-light transition-all active:scale-[0.98]"
       >
         ابدأ رحلتك الآن
       </button>
