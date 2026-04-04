@@ -1,9 +1,7 @@
 import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Droplets, Compass, BookOpen, Navigation, Clock,
-  Play, CheckCircle2, Settings, Flame, ChevronLeft, Bell,
-  Hexagon, ChevronDown
+  Play, CheckCircle2, Settings, Flame, Bell, ChevronDown
 } from 'lucide-react'
 import { useGreeting, useHijriDate, useDaysSinceSahada } from '../hooks/useGreeting'
 import { useUserStore } from '../store/userStore'

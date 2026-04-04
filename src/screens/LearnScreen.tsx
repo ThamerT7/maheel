@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, RotateCcw } from 'lucide-react'
 import { adhkarCategories } from '../data/adhkarData'
-import type { AdhkarCategory, Dhikr } from '../data/adhkarData'
+import type { Dhikr } from '../data/adhkarData'
 
 /* ──────────────────────────────────────────────
    Guide category card type

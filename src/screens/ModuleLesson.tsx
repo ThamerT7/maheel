@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ChevronLeft, Check, BookOpen, Lightbulb, Star, Dumbbell } from 'lucide-react'
 import { getModuleContent } from '../data/moduleContent'
-import { islamPillars, imanPillars } from '../data/pillarsData'
+import { islamPillars } from '../data/pillarsData'
 import { useProgressStore } from '../store/progressStore'
 
 export function ModuleLesson() {
